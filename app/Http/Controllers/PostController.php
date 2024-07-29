@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use Illuminate\Http\Request;
+use App\Models\User;
 
 class PostController extends Controller
 {
     public function index()
     {
-        $posts = Post::all();
+        // $posts = Post::all()->sortDesc();
+        $posts = Post::all()->where("user_id", auth()->user()->id);
         return view('posts.index', compact('posts'));
     }
 
@@ -20,10 +22,13 @@ class PostController extends Controller
 
     public function store(Request $request)
     {
+        
         $data=$request->validate([
             'title' => 'required',
             'content' => 'required',
         ]);
+
+        $data['user_id']=auth()->user()->id;
 
         Post::create($data);
 
@@ -33,11 +38,19 @@ class PostController extends Controller
 
     public function show(Post $post)
     {
+        if($post->user_id != auth()->user()->id){
+            abort(404);
+        }
+
         return view('posts.show', compact('post'));
     }
 
     public function edit(Post $post)
     {
+        if($post->user_id != auth()->user()->id){
+            abort(404);
+        }
+
         return view('posts.edit', compact('post'));
     }
 
@@ -48,6 +61,11 @@ class PostController extends Controller
             'content' => 'required',
         ]);
 
+
+        if($post->user_id != auth()->user()->id){
+            abort(404);
+        }
+
         $post->update($data);
 
         return redirect()->route('posts.index')
@@ -56,6 +74,11 @@ class PostController extends Controller
 
     public function destroy(Post $post)
     {
+
+        if($post->user_id != auth()->user()->id){
+            abort(404);
+        }
+
         $post->delete();
 
         return redirect()->route('posts.index')
